@@ -135,6 +135,24 @@ describe('TokenDistributor', () => {
                 )
             })
 
+            it('proof verification works', async () => {
+                const root = Buffer.from(tree.getHexRoot().slice(2), 'hex')
+
+                const proof0 = tree
+                    .getProof(0, wallet0.address, BigNumber.from(100))
+                    .map((el) => Buffer.from(el.slice(2), 'hex'))
+
+                expect(BalanceTree.verifyProof(0, wallet0.address, BigNumber.from(100), proof0, root))
+                .to.be.true
+
+                const proof1 = tree
+                    .getProof(1, wallet1.address, BigNumber.from(101))
+                    .map((el) => Buffer.from(el.slice(2), 'hex'))
+
+                expect(BalanceTree.verifyProof(1, wallet1.address, BigNumber.from(101), proof1, root))
+                .to.be.true
+            })
+
         })
     })
 
