@@ -27,26 +27,26 @@ const xdaiQuery = gql`
   
 `
 
-const fetchDOrgDaoReps = (endpoint: string, query: string, variables={}) => new Promise<DorgGQLRes | any>((resolve, reject) => {
-    request(endpoint, query, variables)
-      .then((data) => resolve(data))
-      .catch(err => reject(err));
+const fetchDOrgDaoReps = (endpoint: string, query: string, variables = {}) => new Promise<DorgGQLRes | any>((resolve, reject) => {
+  request(endpoint, query, variables)
+    .then((data) => resolve(data))
+    .catch(err => reject(err));
+});
+
+async function generateMerkleRoot(totalTokenToDistribute: number) {
+  let res: DorgGQLRes = await fetchDOrgDaoReps(API_URL, xdaiQuery).catch(error => {
+    console.error(error)
+    return null;
   });
-  
-  async function generateMerkleRoot(totalTokenToDistribute: number) {
-    let res: DorgGQLRes = await fetchDOrgDaoReps(API_URL, xdaiQuery).catch(error => {
-      console.error(error)
-      return null;
-    });
 
-    if(!res) {
-      console.error(`Merkle root generation aborted. Fetch API call failed`)
-      return
-    }
-    
-    const { totalSupply } = res.dao.nativeReputation
+  if (!res) {
+    console.error(`Merkle root generation aborted. Fetch API call failed`)
+    return
+  }
 
-    const reputationHolders = res.dao.reputationHolders.reduce<{[address: string] : {tokenByRep: BigNumber}}>
+  const { totalSupply } = res.dao.nativeReputation
+
+  const reputationHolders = res.dao.reputationHolders.reduce<{ [address: string]: { tokenByRep: BigNumber } }>
     ((addressTORepMap, reputationHolder) => {
 
       let address = reputationHolder.address
@@ -56,43 +56,56 @@ const fetchDOrgDaoReps = (endpoint: string, query: string, variables={}) => new 
       const parsedAdd = getAddress(address)
       if (addressTORepMap[parsedAdd]) throw new Error(`Duplicate address: ${parsedAdd}`)
 
-        let repFraction = reputationHolder.balance / totalSupply
-        let token = repFraction * totalTokenToDistribute;
-        addressTORepMap[reputationHolder.address] = {
-            tokenByRep: BigNumber.from(token * 10^18)
-        }
-
-        return addressTORepMap
-    }, {})
-
-    const sortedAddresses = Object.keys(reputationHolders).sort()
-
-    // construct a tree
-    const tree = new BalanceTree(
-      sortedAddresses.map((address) => ({ account: address, amount: reputationHolders[address].tokenByRep }))
-    )
-
-    // generate claims
-    const claims = sortedAddresses.reduce<{
-      [address: string]: { amount: string; index: number; proof: string[]}
-    }>((addressMap, address, index) => {
-      const { tokenByRep } = reputationHolders[address]
-      addressMap[address] = {
-        index,
-        amount: tokenByRep.toHexString(),
-        proof: tree.getProof(index, address, tokenByRep),
+      let repFraction = reputationHolder.balance / totalSupply
+      let token = repFraction * totalTokenToDistribute;
+      addressTORepMap[reputationHolder.address] = {
+        tokenByRep: BigNumber.from(token * 10 ^ 18)
       }
-      return addressMap
+
+      return addressTORepMap
     }, {})
 
-    console.log(JSON.stringify({
-      merkleRoot: tree.getHexRoot(),
-      claims
-    }))
-    
+  const sortedAddresses = Object.keys(reputationHolders).sort()
+
+  // construct a tree
+  const tree = new BalanceTree(
+    sortedAddresses.map((address) => ({ account: address, amount: reputationHolders[address].tokenByRep }))
+  )
+
+  // generate claims
+  const claims = sortedAddresses.reduce<{
+    [address: string]: { amount: string; index: number; proof: string[] }
+  }>((addressMap, address, index) => {
+    const { tokenByRep } = reputationHolders[address]
+    addressMap[address] = {
+      index,
+      amount: tokenByRep.toHexString(),
+      proof: tree.getProof(index, address, tokenByRep),
+    }
+    return addressMap
+  }, {})
+
+  return {
+    merkleRoot: tree.getHexRoot(),
+    claims
   }
-  
+
+}
+
+async function printMerkleTree() {
   const totalToken = parseInt(process.argv[2])
 
-  generateMerkleRoot(totalToken);
+  if(!totalToken) {
+    console.log('No Token passed. Aborted')
+    return
+  }
+
+  const merkleTree = await generateMerkleRoot(totalToken);
+  console.log(JSON.stringify(merkleTree))
+}
+
+printMerkleTree()
+
+
+
 
