@@ -1,5 +1,5 @@
 import { request, gql } from 'graphql-request';
-import DorgGQLRes from '../src/model'
+import {DorgGQLRes, Dao} from '../src/model'
 import { BigNumber, utils } from 'ethers'
 import BalanceTree from '../src/balance-tree'
 
@@ -33,20 +33,11 @@ const fetchDOrgDaoReps = (endpoint: string, query: string, variables = {}) => ne
     .catch(err => reject(err));
 });
 
-async function generateMerkleRoot(totalTokenToDistribute: number) {
-  let res: DorgGQLRes = await fetchDOrgDaoReps(API_URL, xdaiQuery).catch(error => {
-    console.error(error)
-    return null;
-  });
+async function generateMerkleRoot(totalTokenToDistribute: number, dOrgDao: Dao) {
 
-  if (!res) {
-    console.error(`Merkle root generation aborted. Fetch API call failed`)
-    return
-  }
+  const { totalSupply } = dOrgDao.nativeReputation
 
-  const { totalSupply } = res.dao.nativeReputation
-
-  const reputationHolders = res.dao.reputationHolders.reduce<{ [address: string]: { tokenByRep: BigNumber } }>
+  const reputationHolders = dOrgDao.reputationHolders.reduce<{ [address: string]: { tokenByRep: BigNumber } }>
     ((addressTORepMap, reputationHolder) => {
 
       let address = reputationHolder.address
@@ -100,7 +91,17 @@ async function printMerkleTree() {
     return
   }
 
-  const merkleTree = await generateMerkleRoot(totalToken);
+  let dOrgGQLRes: DorgGQLRes = await fetchDOrgDaoReps(API_URL, xdaiQuery).catch(error => {
+    console.error(error)
+    return null;
+  });
+
+  if (!dOrgGQLRes) {
+    console.error(`Merkle root generation aborted. Fetch API call failed`)
+    return
+  }
+
+  const merkleTree = await generateMerkleRoot(totalToken, dOrgGQLRes.dao);
   console.log(JSON.stringify(merkleTree))
 }
 

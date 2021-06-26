@@ -24,4 +24,4 @@ type DorgGQLRes = {
   dao: Dao
 }
 
-export default DorgGQLRes
+export {DorgGQLRes, Dao, ReputationHolder, AvatarContract, NativeReputation}
