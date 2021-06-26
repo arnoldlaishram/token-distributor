@@ -113,6 +113,14 @@ describe('TokenDistributor', () => {
                 expect(await distributor.isClaimed(0)).to.equal(true)
             })
 
+            it('Cannot claim twice', async () => {
+                const proof0 = tree.getProof(0, wallet0.address, BigNumber.from(100))
+                await distributor.claim(0, wallet0.address, 100, proof0, overrides)
+                
+                await expect(distributor.claim(0, wallet0.address, 100, proof0, overrides))
+                    .to.be.revertedWith('TokenDistributor: Drop already claimed.')
+            })
+
 
         })
     })
