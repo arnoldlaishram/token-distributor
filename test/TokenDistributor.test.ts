@@ -99,7 +99,21 @@ describe('TokenDistributor', () => {
                     .to.be.revertedWith('ERC20: transfer amount exceeds balance')
             })
 
-            
+            it('must have enough to transfer', async () => {
+                const proof0 = tree.getProof(0, wallet0.address, BigNumber.from(100))
+                await token.setBalance(distributor.address, 99)
+                await expect(distributor.claim(0, wallet0.address, 100, proof0, overrides))
+                    .to.be.revertedWith('ERC20: transfer amount exceeds balance')
+            })
+
+            it('set #isClaimed', async () => {
+                expect(await distributor.isClaimed(0)).to.equal(false)
+                const proof0 = tree.getProof(0, wallet0.address, BigNumber.from(100))
+                await distributor.claim(0, wallet0.address, 100, proof0, overrides)
+                expect(await distributor.isClaimed(0)).to.equal(true)
+            })
+
+
         })
     })
 
