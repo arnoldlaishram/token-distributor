@@ -46,7 +46,10 @@ contract TokenDistributor is ITokenDistributor, Ownable {
         emit Claimed(index, account, amount);
     }
 
-    function burn() external onlyOwner {
+    function drain(address to, uint256 amount) external override onlyOwner {
+       require(IERC20(token).transfer(to, amount), 'TokenDistributor: Drain failed'); 
 
+       emit Drained(to, amount);
     }
+
 }

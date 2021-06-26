@@ -12,6 +12,12 @@ interface ITokenDistributor {
     // Claim the given amount of the token to the given address. Reverts if the inputs are invalid.
     function claim(uint256 index, address account, uint256 amount, bytes32[] calldata merkleProof) external;
 
+    // Burn the token balance to address(0) who has admin access
+    function drain(address to, uint256 amount) external;
+
     // This event is triggered whenever a call to #claim succeeds.
     event Claimed(uint256 index, address account, uint256 amount);
+
+    //This event is triggered whenever a call to #drain succeeds.
+    event Drained(address to, uint256 amount);
 }
