@@ -121,6 +121,19 @@ describe('TokenDistributor', () => {
                     .to.be.revertedWith('TokenDistributor: Drop already claimed.')
             })
 
+            it('cannot claim if proof is invalid', async () => {
+                const proof0 = tree.getProof(0, wallet0.address, BigNumber.from(100))
+                await expect(distributor.claim(1, wallet1.address, 101, proof0, overrides)).to.be.revertedWith(
+                  'TokenDistributor: Invalid proof.'
+                )
+            })
+
+            it('cannot claim if index is invalid', async () => {
+                const proof0 = tree.getProof(0, wallet0.address, BigNumber.from(100))
+                await expect(distributor.claim(10, wallet1.address, 100, proof0, overrides)).to.be.revertedWith(
+                  'TokenDistributor: Invalid proof.'
+                )
+            })
 
         })
     })
