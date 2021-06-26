@@ -1,0 +1,24 @@
+{
+  "name": "token-distributor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Arnold",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.0",
+    "@nomiclabs/hardhat-waffle": "^2.0.0",
+    "chai": "^4.2.0",
+    "ethereum-waffle": "^3.0.0",
+    "ethereumjs-util": "^7.0.10",
+    "ethers": "^5.0.0",
+    "hardhat": "^2.4.1"
+  },
+  "dependencies": {
+    "graphql": "^15.5.1",
+    "graphql-request": "^3.4.0"
+  }
+}
