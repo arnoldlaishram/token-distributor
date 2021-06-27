@@ -176,11 +176,11 @@ describe('TokenDistributor', () => {
             expect(await token.balanceOf(account1.address)).to.equal(201)
         })
 
-        // it('drains fails with incorrect owner.',  async () => {
-        //     const [account0, account1, account2] = await ethers.getSigners()
-        //     await expect(distributor.connect(account1.address).drain(account2.address, 201, overrides))
-        //     .to.be.revertedWith('TokenDistributor: Drain failed')
-        // })
+        it('drains fails with incorrect owner.',  async () => {
+            const [account0, account1, account2] = await ethers.getSigners()
+            await expect(distributor.connect(account1).drain(account2.address, 201, overrides))
+            .to.be.revertedWith('Ownable: caller is not the owner')
+        })
 
     })
 
