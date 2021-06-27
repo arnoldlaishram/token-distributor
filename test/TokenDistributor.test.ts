@@ -2,12 +2,11 @@ import { expect } from 'chai'
 import "@nomiclabs/hardhat-waffle";
 
 import { waffle, ethers } from "hardhat";
-const { deployContract, solidity, provider } = waffle;
+const { provider } = waffle;
 import BalanceTree from '../src/balance-tree'
 import { Contract, BigNumber } from 'ethers';
-
-import * as Distributor from '../artifacts/contracts/TokenDistributor.sol/TokenDistributor.json'
-import * as TestERC20 from '../artifacts/contracts/test/TestERC20.sol/TestERC20.json'
+import { generateMerkleRoot } from '../scripts/generate-merkle-root';
+import { Dao } from '../src/model';
 
 const overrides = {
     gasLimit: 9999999,
@@ -154,6 +153,88 @@ describe('TokenDistributor', () => {
             })
 
         })
+    })
+
+    describe('#drain', () => {
+
+        
+        beforeEach('deploy with admin access', async () => {
+            await token.setBalance(distributor.address, 201)
+        })
+
+        it('drains with correct owner. Emits Drained event',  async () => {
+            const [account0, account1] = await ethers.getSigners()
+            await expect(distributor.drain(account1.address, 201, {from: account0.address, ...overrides }))
+            .to.emit(distributor, 'Drained')
+            .withArgs(account1.address, 201)
+        })
+
+        it('drains to given address',  async () => {
+            const [account0, account1] = await ethers.getSigners()
+            await distributor.drain(account1.address, 201, {from: account0.address, ...overrides })
+            expect(await token.balanceOf(distributor.address)).to.equal(0)
+            expect(await token.balanceOf(account1.address)).to.equal(201)
+        })
+
+        // it('drains fails with incorrect owner.',  async () => {
+        //     const [account0, account1, account2] = await ethers.getSigners()
+        //     await expect(distributor.connect(account1.address).drain(account2.address, 201, overrides))
+        //     .to.be.revertedWith('TokenDistributor: Drain failed')
+        // })
+
+    })
+
+    describe('#generate-merkle-tree', () => {
+
+        let generatedClaims;
+        beforeEach('deploy', async () => {
+            const dorgDao : Dao = {
+            "avatarContract": {
+                "balance": 0,
+                "name": "Girard28"
+            },
+            "name": "Girard28",
+            "nativeReputation": {
+                "totalSupply": 300000000000000000000
+            },
+            "reputationHolders": [
+                {
+                "address": wallet0.address,
+                "balance": 100000000000000000000
+                },
+                {
+                "address": wallet1.address,
+                "balance": 100000000000000000000
+                }
+            ]
+            }
+
+            const { claims, merkleRoot } = await generateMerkleRoot(100000000000000, dorgDao)
+            generatedClaims = claims
+            const TokenDistributor = await ethers.getContractFactory("TokenDistributor");
+            distributor = await TokenDistributor.deploy(token.address, merkleRoot, overrides);
+            await token.setBalance(distributor.address, 100000000000000)
+          })
+
+          it('check the proofs is as expected', () => {
+            expect(generatedClaims).to.deep.eq({
+              [wallet0.address]: {
+                index: 1,
+                amount: "0x36ecd547",
+                proof: [
+                    "0xc2177d4ae756a29b3457b1aae308d478f6d54dcf4793f44aeedd0749c7aba19c"
+                ],
+              },
+              [wallet1.address]: {
+                index: 0,
+                amount: "0x36ecd547",
+                proof: [
+                    "0xa74bd5d71baa803424d1ae14e8e32ce0819cda9cb8fa89eab0bb976a587f7ea4"  
+                ],
+              }
+            })
+          })
+
     })
 
 })

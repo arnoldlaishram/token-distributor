@@ -24,7 +24,6 @@ const xdaiQuery = gql`
             }
         }
     }
-  
 `
 
 const fetchDOrgDaoReps = (endpoint: string, query: string, variables = {}) => new Promise<DorgGQLRes | any>((resolve, reject) => {
@@ -33,7 +32,7 @@ const fetchDOrgDaoReps = (endpoint: string, query: string, variables = {}) => ne
     .catch(err => reject(err));
 });
 
-async function generateMerkleRoot(totalTokenToDistribute: number, dOrgDao: Dao) {
+export async function generateMerkleRoot(totalTokenToDistribute: number, dOrgDao: Dao) {
 
   const { totalSupply } = dOrgDao.nativeReputation
 
