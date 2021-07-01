@@ -2,6 +2,9 @@ import { request, gql } from 'graphql-request';
 import {DorgGQLRes, Dao} from '../src/model'
 import { BigNumber, utils } from 'ethers'
 import BalanceTree from '../src/balance-tree'
+import * as path from 'path'
+import { writeToFile } from '../src/util'
+
 
 const { isAddress, getAddress } = utils
 
@@ -101,7 +104,11 @@ async function printMerkleTree() {
   }
 
   const merkleTree = await generateMerkleRoot(totalToken, dOrgGQLRes.dao);
-  console.log(JSON.stringify(merkleTree))
+  let outputPath = path.join(__dirname, '..', 'output/distribution.json')
+
+  console.log('\n Writing Merkle tree...')
+  await writeToFile(outputPath, JSON.stringify(merkleTree, null, 2)).catch(console.error)
+
 }
 
 printMerkleTree()
