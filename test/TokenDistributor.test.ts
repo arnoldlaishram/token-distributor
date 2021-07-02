@@ -152,7 +152,7 @@ describe('TokenDistributor', () => {
                 .to.be.true
             })
 
-            it('Can claim if with timeFrame', async () => {
+            it('Can claim if within timeFrame', async () => {
                 let _1hr = 3600;
                 await ethers.provider.send("evm_increaseTime", [3600])
                 await ethers.provider.send("evm_mine", [])
@@ -185,7 +185,34 @@ describe('TokenDistributor', () => {
             await token.setBalance(distributor.address, 201)
         })
 
+        it('Can\'t drain if within timeFrame', async () => {
+            let _1hr = 3600;
+            await ethers.provider.send("evm_increaseTime", [3600])
+            await ethers.provider.send("evm_mine", [])
+
+            const [account0, account1] = await ethers.getSigners()
+            await expect(distributor.drain(account1.address, 201, {from: account0.address, ...overrides }))
+            .to.be.revertedWith('Cannot Drain. Timeframe not elapsed')
+        })
+
+        it('Can drain if timeframe is elapsed', async () => {
+            let _4days = 3600 * 24 * 4;
+            await ethers.provider.send("evm_increaseTime", [_4days])
+            await ethers.provider.send("evm_mine", [])
+
+            const [account0, account1] = await ethers.getSigners()
+            await distributor.drain(account1.address, 201, {from: account0.address, ...overrides })
+            expect(await token.balanceOf(distributor.address)).to.equal(0)
+            expect(await token.balanceOf(account1.address)).to.equal(201)
+
+        })
+
         it('drains with correct owner. Emits Drained event',  async () => {
+
+            let _4days = 3600 * 24 * 4;
+            await ethers.provider.send("evm_increaseTime", [_4days])
+            await ethers.provider.send("evm_mine", [])
+
             const [account0, account1] = await ethers.getSigners()
             await expect(distributor.drain(account1.address, 201, {from: account0.address, ...overrides }))
             .to.emit(distributor, 'Drained')
@@ -193,6 +220,11 @@ describe('TokenDistributor', () => {
         })
 
         it('drains to given address',  async () => {
+
+            let _4days = 3600 * 24 * 4;
+            await ethers.provider.send("evm_increaseTime", [_4days])
+            await ethers.provider.send("evm_mine", [])
+
             const [account0, account1] = await ethers.getSigners()
             await distributor.drain(account1.address, 201, {from: account0.address, ...overrides })
             expect(await token.balanceOf(distributor.address)).to.equal(0)

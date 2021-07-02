@@ -52,6 +52,8 @@ contract TokenDistributor is ITokenDistributor, Ownable {
     }
 
     function drain(address to, uint256 amount) external override onlyOwner {
+       require(block.timestamp > timeFrame, 'Cannot Drain. Timeframe not elapsed');
+
        require(IERC20(token).transfer(to, amount), 'TokenDistributor: Drain failed'); 
 
        emit Drained(to, amount);
