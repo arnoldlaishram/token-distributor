@@ -4,8 +4,6 @@ import { BigNumber, utils } from 'ethers'
 import BalanceTree from '../src/balance-tree'
 import * as path from 'path'
 import { writeToFile } from '../src/util'
-const { parseUnits, parseEther } = utils
-
 
 const { isAddress, getAddress } = utils
 
@@ -36,10 +34,12 @@ const fetchDOrgDaoReps = (endpoint: string, query: string, variables = {}) => ne
     .catch(err => reject(err));
 });
 
-export async function generateMerkleRoot(totalTokenToDistribute: number, dOrgDao: Dao) {
+export async function generateMerkleRoot(totalTokenToDistribute: string, dOrgDao: Dao) {
 
   const { totalSupply } = dOrgDao.nativeReputation
 
+
+  let total: BigNumber = BigNumber.from(0);
   const reputationHolders = dOrgDao.reputationHolders.reduce<{ [address: string]: { tokenByRep: BigNumber } }>
     ((addressTORepMap, reputationHolder) => {
 
@@ -50,13 +50,26 @@ export async function generateMerkleRoot(totalTokenToDistribute: number, dOrgDao
       const parsedAdd = getAddress(address)
       if (addressTORepMap[parsedAdd]) throw new Error(`Duplicate address: ${parsedAdd}`)
 
-      let repFraction = reputationHolder.balance / totalSupply
-      let token = repFraction * totalTokenToDistribute;
-      const tokenByRep = BigNumber.from(parseInt(`${token}`))
-      addressTORepMap[reputationHolder.address] = { tokenByRep }
+      const repHolderBal = BigNumber.from(`${reputationHolder.balance}`)
+      console.log('repHolderBal: ' + repHolderBal.toString())
+      const totalRepSupply = BigNumber.from(`${totalSupply}`)
+      console.log('totalRepSupply: ' + totalRepSupply.toString())
+
+      const wad = BigNumber.from('10000000000000000000000000000000000')
+
+      let repFraction = repHolderBal.mul(wad).div(totalRepSupply)
+      console.log('repFraction: ' + repFraction.toString())
+      console.log('totalTokenToDistribute: ' + totalTokenToDistribute)
+      let token = repFraction.mul(BigNumber.from(totalTokenToDistribute)).div(wad)
+
+      console.log('token: ' + token.toString())
+      total = total.add(token);
+      addressTORepMap[reputationHolder.address] = { tokenByRep: token }
 
       return addressTORepMap
     }, {})
+
+  console.log('total: ' + total.toString())
 
   const sortedAddresses = Object.keys(reputationHolders).sort()
 
@@ -68,11 +81,10 @@ export async function generateMerkleRoot(totalTokenToDistribute: number, dOrgDao
   // generate claims
   const claims = sortedAddresses.map((address, index) => {
     const { tokenByRep } = reputationHolders[address]
-    const amount = tokenByRep.toNumber()
     return {
       index,
       address,
-      amount: `${amount}`,
+      amount: tokenByRep.toString(),
       nodeHash: tree.getNodeHex(index, address, tokenByRep),
       proof: tree.getProof(index, address, tokenByRep)
     }
@@ -87,7 +99,7 @@ export async function generateMerkleRoot(totalTokenToDistribute: number, dOrgDao
 }
 
 async function printMerkleTree() {
-  const totalToken = parseInt(process.argv[2])
+  const totalToken = process.argv[2]
 
   if(!totalToken) {
     console.log('No Token passed. Aborted')
