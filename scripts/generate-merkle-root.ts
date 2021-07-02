@@ -80,6 +80,7 @@ export async function generateMerkleRoot(totalTokenToDistribute: number, dOrgDao
 
   return {
     merkleRoot: tree.getHexRoot(),
+    tokenTotal: `${totalTokenToDistribute}`,
     claims
   }
 
