@@ -12,10 +12,12 @@ contract TokenDistributor is ITokenDistributor, Ownable {
 
     // This is a packed array of booleans.
     mapping(uint256 => uint256) private claimedBitMap;
+    uint256 private timeFrame;
 
     constructor(address token_, bytes32 merkleRoot_) {
         token = token_;
         merkleRoot = merkleRoot_;
+        timeFrame = block.timestamp + 3 days;
     }
 
     function isClaimed(uint256 index) public view override returns (bool) {
@@ -34,6 +36,9 @@ contract TokenDistributor is ITokenDistributor, Ownable {
 
     function claim(uint256 index, address account, uint256 amount, bytes32[] calldata merkleProof) external override {
         require(!isClaimed(index), 'TokenDistributor: Drop already claimed.');
+
+        // Don't allow to claim token if timeframe is elapsed.
+        require(block.timestamp <= timeFrame, 'Cannot claim. You missed it');
 
         // Verify the merkle proof.
         bytes32 node = keccak256(abi.encodePacked(index, account, amount));

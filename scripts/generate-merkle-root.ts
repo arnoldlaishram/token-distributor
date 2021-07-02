@@ -4,6 +4,7 @@ import { BigNumber, utils } from 'ethers'
 import BalanceTree from '../src/balance-tree'
 import * as path from 'path'
 import { writeToFile } from '../src/util'
+const { parseUnits, parseEther } = utils
 
 
 const { isAddress, getAddress } = utils
@@ -51,9 +52,8 @@ export async function generateMerkleRoot(totalTokenToDistribute: number, dOrgDao
 
       let repFraction = reputationHolder.balance / totalSupply
       let token = repFraction * totalTokenToDistribute;
-      addressTORepMap[reputationHolder.address] = {
-        tokenByRep: BigNumber.from(token * 10 ^ 18)
-      }
+      const tokenByRep = BigNumber.from(parseInt(`${token}`))
+      addressTORepMap[reputationHolder.address] = { tokenByRep }
 
       return addressTORepMap
     }, {})
@@ -66,17 +66,17 @@ export async function generateMerkleRoot(totalTokenToDistribute: number, dOrgDao
   )
 
   // generate claims
-  const claims = sortedAddresses.reduce<{
-    [address: string]: { amount: string; index: number; proof: string[] }
-  }>((addressMap, address, index) => {
+  const claims = sortedAddresses.map((address, index) => {
     const { tokenByRep } = reputationHolders[address]
-    addressMap[address] = {
+    const amount = tokenByRep.toNumber()
+    return {
       index,
-      amount: tokenByRep.toHexString(),
-      proof: tree.getProof(index, address, tokenByRep),
+      address,
+      amount: `${amount}`,
+      nodeHash: tree.getNodeHex(index, address, tokenByRep),
+      proof: tree.getProof(index, address, tokenByRep)
     }
-    return addressMap
-  }, {})
+  })
 
   return {
     merkleRoot: tree.getHexRoot(),

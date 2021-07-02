@@ -152,6 +152,29 @@ describe('TokenDistributor', () => {
                 .to.be.true
             })
 
+            it('Can claim if with timeFrame', async () => {
+                let _1hr = 3600;
+                await ethers.provider.send("evm_increaseTime", [3600])
+                await ethers.provider.send("evm_mine", [])
+
+                const proof0 = tree.getProof(0, wallet0.address, BigNumber.from(100))
+                await expect(distributor.claim(0, wallet0.address, 100, proof0, overrides))
+                    .to.emit(distributor, 'Claimed')
+                    .withArgs(0, wallet0.address, 100)
+            })
+
+            it('Cannot claim if timeframe is elapsed', async () => {
+                let _4days = 3600 * 24 * 4;
+                await ethers.provider.send("evm_increaseTime", [_4days])
+                await ethers.provider.send("evm_mine", [])
+
+                const proof0 = tree.getProof(0, wallet0.address, BigNumber.from(100))
+                await expect(distributor.claim(0, wallet0.address, 100, proof0, overrides)).to.be.revertedWith(
+                  'Cannot claim. You missed it'
+                )
+
+            })
+
         })
     })
 
@@ -217,22 +240,26 @@ describe('TokenDistributor', () => {
           })
 
           it('check the proofs is as expected', () => {
-            expect(generatedClaims).to.deep.eq({
-              [wallet0.address]: {
-                index: 1,
-                amount: "0x36ecd547",
-                proof: [
-                    "0xc2177d4ae756a29b3457b1aae308d478f6d54dcf4793f44aeedd0749c7aba19c"
-                ],
-              },
-              [wallet1.address]: {
-                index: 0,
-                amount: "0x36ecd547",
-                proof: [
-                    "0xa74bd5d71baa803424d1ae14e8e32ce0819cda9cb8fa89eab0bb976a587f7ea4"  
-                ],
-              }
-            })
+            expect(generatedClaims).to.deep.eq([
+                {
+                    index: 0,
+                    address: wallet1.address,
+                    amount: "33333333333333",
+                    nodeHash: "0xab7b98b9b116f35824d1148773785af9114c80c63a893fe5b0d2e75e3d6f37c5",
+                    proof: [
+                        "0xca109105ceefe4adb2d97f62b97419f8b9cc737586f17751b2f88bdb1257038c"
+                    ],
+                },
+                {
+                    index: 1,
+                    address: wallet0.address,
+                    amount: "33333333333333",
+                    nodeHash: "0xca109105ceefe4adb2d97f62b97419f8b9cc737586f17751b2f88bdb1257038c",
+                    proof: [
+                        "0xab7b98b9b116f35824d1148773785af9114c80c63a893fe5b0d2e75e3d6f37c5"
+                    ]
+                }
+            ])
           })
 
     })
