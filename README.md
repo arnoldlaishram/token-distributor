@@ -96,3 +96,7 @@ npx hardhat run scripts/deploy.ts --network ropsten
 
 ### Testing the smart contract
 
+[![Testing TokenDistributor using Remix IDE](https://user-images.githubusercontent.com/19688333/124708289-b347c880-df17-11eb-86d6-b993f9401eeb.png)
+](https://youtu.be/yi3HGhno9-E)
+
+
