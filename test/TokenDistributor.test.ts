@@ -264,8 +264,7 @@ describe('TokenDistributor', () => {
             ]
             }
 
-            const tokenSupply = 100000000000000;
-            const { claims, merkleRoot } = await generateMerkleRoot(`${tokenSupply}`, dorgDao)
+            const { claims, merkleRoot } = await generateMerkleRoot("100000000000000", dorgDao)
             generatedClaims = claims
             const TokenDistributor = await ethers.getContractFactory("TokenDistributor");
             distributor = await TokenDistributor.deploy(token.address, merkleRoot, overrides);
@@ -273,26 +272,54 @@ describe('TokenDistributor', () => {
         })
 
         it('check the proofs is as expected', () => {
-        expect(generatedClaims).to.deep.eq([
-            {
-                index: 0,
-                address: wallet1.address,
-                amount: "33333333333333",
-                nodeHash: "0xab7b98b9b116f35824d1148773785af9114c80c63a893fe5b0d2e75e3d6f37c5",
-                proof: [
-                    "0xca109105ceefe4adb2d97f62b97419f8b9cc737586f17751b2f88bdb1257038c"
-                ],
-            },
-            {
-                index: 1,
-                address: wallet0.address,
-                amount: "33333333333333",
-                nodeHash: "0xca109105ceefe4adb2d97f62b97419f8b9cc737586f17751b2f88bdb1257038c",
-                proof: [
-                    "0xab7b98b9b116f35824d1148773785af9114c80c63a893fe5b0d2e75e3d6f37c5"
+            expect(generatedClaims).to.deep.eq([
+                {
+                    index: 0,
+                    address: wallet1.address,
+                    amount: "5773502691896",
+                    nodeHash: "0x4339699ddd41b13253fd38eefb0d712d9e08bb91a89348c6f7b8d5642edfda46",
+                    proof: [
+                        "0xc846e4da6493847bc0108929fe7e36b9150997630608d2544d62b9f2cbbf542a"
+                    ],
+                },
+                {
+                    index: 1,
+                    address: wallet0.address,
+                    amount: "5773502691896",
+                    nodeHash: "0xc846e4da6493847bc0108929fe7e36b9150997630608d2544d62b9f2cbbf542a",
+                    proof: [
+                        "0x4339699ddd41b13253fd38eefb0d712d9e08bb91a89348c6f7b8d5642edfda46"
+                    ]
+                }
+            ])
+        })
+
+        it('check quadratic distribution', async () => {
+            const dorgDao: Dao = {
+                "avatarContract": {
+                    "balance": 0,
+                    "name": "Avatar"
+                },
+                "name": "Avatar",
+                "nativeReputation": {
+                    "totalSupply": 100
+                },
+                "reputationHolders": [
+                    {
+                        "address": wallet0.address,
+                        "balance": 49
+                    },
+                    {
+                        "address": wallet1.address,
+                        "balance": 16
+                    }
                 ]
             }
-        ])
+
+            const { claims } = await generateMerkleRoot("100000000000000000000", dorgDao)
+
+            expect(claims[0].amount).to.equal("4000000000000000000") // 4% of the total
+            expect(claims[1].amount).to.equal("7000000000000000000") // 7% of the total
         })
 
     })
