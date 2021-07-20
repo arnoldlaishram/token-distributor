@@ -15,7 +15,7 @@ yarn
 
 ### Merkle tree generation
 
-The Merkle tree is generated for the list of dOrg users who have certain reputations. The amount of token that needs to be generated is called based on the amount of reputation(rep) the user holds. Say if the total reputation of dOrg is 10. and if a user has 1 rep. The total token the user can claim is 10%. i,e if total token to distribute is 1000, the user gets 100 tokens.
+The Merkle tree is generated for the list of dOrg users who have certain reputations. The amount of token that needs to be generated is calculated based on the amount of reputation(rep) the user holds. Say if the total reputation of dOrg is 10. and if a user has 1 rep. The total token the user can claim is 10%. i,e if total token to distribute is 1000, the user gets 100 tokens.
 
 
 
@@ -95,4 +95,14 @@ npx hardhat run scripts/deploy.ts --network ropsten
 ```
 
 ### Testing the smart contract
+
+Demo
+
+[![Testing TokenDistributor using Remix IDE](https://user-images.githubusercontent.com/19688333/124708289-b347c880-df17-11eb-86d6-b993f9401eeb.png)
+](https://youtu.be/yi3HGhno9-E)
+
+
+### Sources
+
+https://github.com/Uniswap/merkle-distributor
 
