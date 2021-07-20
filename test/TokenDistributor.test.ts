@@ -276,19 +276,19 @@ describe('TokenDistributor', () => {
                 {
                     index: 0,
                     address: wallet1.address,
-                    amount: "5773502691896",
-                    nodeHash: "0x4339699ddd41b13253fd38eefb0d712d9e08bb91a89348c6f7b8d5642edfda46",
+                    amount: "50000000000000",
+                    nodeHash: "0x4749be133a0b49b9b6c18eff79afd50676113a2dadba51f908e196dfff2d7314",
                     proof: [
-                        "0xc846e4da6493847bc0108929fe7e36b9150997630608d2544d62b9f2cbbf542a"
+                        "0xbf4f8d88f35e944787f9e1c6473654a70b1a26dc682443be90a88f0ca140cab6"
                     ],
                 },
                 {
                     index: 1,
                     address: wallet0.address,
-                    amount: "5773502691896",
-                    nodeHash: "0xc846e4da6493847bc0108929fe7e36b9150997630608d2544d62b9f2cbbf542a",
+                    amount: "50000000000000",
+                    nodeHash: "0xbf4f8d88f35e944787f9e1c6473654a70b1a26dc682443be90a88f0ca140cab6",
                     proof: [
-                        "0x4339699ddd41b13253fd38eefb0d712d9e08bb91a89348c6f7b8d5642edfda46"
+                        "0x4749be133a0b49b9b6c18eff79afd50676113a2dadba51f908e196dfff2d7314"
                     ]
                 }
             ])
@@ -318,8 +318,8 @@ describe('TokenDistributor', () => {
 
             const { claims } = await generateMerkleRoot("100000000000000000000", dorgDao)
 
-            expect(claims[0].amount).to.equal("4000000000000000000") // 4% of the total
-            expect(claims[1].amount).to.equal("7000000000000000000") // 7% of the total
+            expect(claims[0].amount).to.equal("36363636363636363636") // (4 / 11) = 0.363636% of the total
+            expect(claims[1].amount).to.equal("63636363636363636363") // (7 / 11) = 0.636363% of the total
         })
 
     })

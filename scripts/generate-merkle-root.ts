@@ -5,51 +5,59 @@ const BN = require('bignumber.js');
 const DecimalBN = BN.BigNumber
 
 const { isAddress, getAddress } = utils
+const wad = new DecimalBN('100000000000000000000000000000000000000000000000000') // 1e50
 
 export async function generateMerkleRoot(totalTokenToDistribute: string, dOrgDao: Dao) {
+
+  let totalRepSqrt = new DecimalBN(0)
+  let totalTokenWithDecimal = new DecimalBN(0)
+  let totalTokenWithoutDecimal = new DecimalBN(0)
 
   const { totalSupply } = dOrgDao.nativeReputation
 
   console.log('totalSupply: ' + totalSupply)
 
-  let totalTokenWithDecimal = new DecimalBN(0)
-  let totalTokenWithoutDecimal = new DecimalBN(0)
+  const reputationSqrt = dOrgDao.reputationHolders.reduce<{[address: string]: BigNumber }>
+  ((addressTORepMap, reputationHolder) => {
+
+    let address = reputationHolder.address
+    if (!isAddress(address)) {
+      throw new Error(`Found invalid address: ${address}`)
+    }
+    const parsedAdd = getAddress(address)
+    if (addressTORepMap[parsedAdd]) throw new Error(`Duplicate address: ${parsedAdd}`)
+
+    const repHolderBal = new DecimalBN(`${reputationHolder.balance}`)    
+    const totalRepSupply = new DecimalBN(`${totalSupply}`)
+
+    let repPercent = repHolderBal.dividedBy(totalRepSupply).multipliedBy(DecimalBN("100"))
+
+    const repPercentRoot = repPercent.multipliedBy(wad).squareRoot() // Multiple by wad not not lose any decimal
+    totalRepSqrt = totalRepSqrt.plus(repPercentRoot)
+
+    addressTORepMap[address] = repPercentRoot
+
+    return addressTORepMap
+
+  }, {})
+
+  console.log('totalRepSqrt' + totalRepSqrt.toFixed())
+
   const reputationHolders = dOrgDao.reputationHolders.reduce<{ [address: string]: { tokenByRep: BigNumber } }>
     ((addressTORepMap, reputationHolder) => {
 
       console.log('\n')
 
       let address = reputationHolder.address
-      if (!isAddress(address)) {
-        throw new Error(`Found invalid address: ${address}`)
-      }
-      const parsedAdd = getAddress(address)
-      if (addressTORepMap[parsedAdd]) throw new Error(`Duplicate address: ${parsedAdd}`)
-
-      const repHolderBal = new DecimalBN(`${reputationHolder.balance}`)
-      console.log('repHolderBal: ' + repHolderBal.toFixed())
-      const totalRepSupply = new DecimalBN(`${totalSupply}`)
-      console.log('totalRepSupply: ' + totalRepSupply.toFixed())
-
-      let repFraction = repHolderBal.dividedBy(totalRepSupply)
-      const repPercent = repFraction.multipliedBy(DecimalBN("100"))
-
-      const wad = new DecimalBN('100000000000000000000000000000000000000000000000000') // 1e50
-      const wadRoot = new DecimalBN('10000000000000000000000000') // 1e25
-
-      const repPercentRoot = repPercent.multipliedBy(wad).squareRoot() // Multiple by wad not not lose any decimal
-      console.log('repPercentRoot: ' + repPercentRoot.toFixed())
-      repFraction = repPercentRoot.dividedBy(new DecimalBN("100"))
-      console.log('repFraction: ' + repFraction.toFixed())
-
-      console.log('totalTokenToDistribute: ' + totalTokenToDistribute)
+      console.log('address: ' + address)
+      const repPercentRoot = reputationSqrt[address]
       const tokenToDistribute = new DecimalBN(totalTokenToDistribute)
-      let token = tokenToDistribute.multipliedBy(repFraction).dividedBy(wadRoot) // divide by root of wad
+      let token = tokenToDistribute.multipliedBy(repPercentRoot).dividedBy(totalRepSqrt)
 
       console.log('tokenWithDecimal: ' + token.toFixed())
       totalTokenWithDecimal = totalTokenWithDecimal.plus(token)
       let tokenWithoutDecimal = token.toFixed().split('.')[0] // Remove the decimal, ethers.js BigNumber doesn't support Decimals
-      console.log('token: ' + tokenWithoutDecimal)
+      console.log('tokenWithoutDecimal: ' + tokenWithoutDecimal)
       totalTokenWithoutDecimal = totalTokenWithoutDecimal.plus(new DecimalBN(tokenWithoutDecimal))
       
       addressTORepMap[reputationHolder.address] = { tokenByRep: BigNumber.from(tokenWithoutDecimal) }
