@@ -47,13 +47,13 @@ API - https://api.thegraph.com/subgraphs/name/daostack/v41_11_xdai
 ```
 
 This info is used to generate merkle tree. You can find the code under `scripts/generate-merkle-root.ts`.
-To run the script use the below command by passing the amount of token.
+To print the merkle tree use the below command by passing the amount of token.
 
 ```
 
-ts-node scripts/generate-merkle-root.ts <amount of token>
+ts-node scripts/print-merkle-tree.ts <amount of token>
 
-ts-node scripts/generate-merkle-root.ts 3000000000000000000
+ts-node scripts/print-merkle-tree.ts 3000000000000000000
 
 ```
 
