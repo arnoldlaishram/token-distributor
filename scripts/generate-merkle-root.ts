@@ -7,6 +7,23 @@ const DecimalBN = BN.BigNumber
 const { isAddress, getAddress } = utils
 const wad = new DecimalBN('100000000000000000000000000000000000000000000000000') // 1e50
 
+/**
+ * 
+ * Logic -
+ * Say there are 4 users in the org,
+ * And If say the rep is distributed as [64, 4, 16, 25], 
+ * its square root is [8, 2, 4, 5]
+ * 
+ * To distribute the rep quadratically for 1000 token
+ * Share of A is (8 / (8 + 2 + 4 + 5)) * 1000 = 421.052
+ * Share of 8 is (2 / (8 + 2 + 4 + 5)) * 1000 = 105.256
+ * Share of C is (4 / (8 + 2 + 4 + 5)) * 1000 = 210.526
+ * Share of D is (5 / (8 + 2 + 4 + 5)) * 1000 = 263.157
+ * 
+ * @param totalTokenToDistribute 
+ * @param dOrgDao 
+ * @returns 
+ */
 export async function generateMerkleRoot(totalTokenToDistribute: string, dOrgDao: Dao) {
 
   let totalRepSqrt = new DecimalBN(0)
